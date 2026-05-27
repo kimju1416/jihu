@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>빛의 반사 퍼즐</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#02040c;touch-action:none}
+body{display:flex;flex-direction:column;font-family:'Noto Sans KR',sans-serif}
+
+/* ── SETUP ── */
+#setup{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;gap:24px;padding:40px;max-width:660px;margin:0 auto;width:100%}
+.logo{font-family:'Orbitron',monospace;font-size:2.1em;font-weight:900;
+  background:linear-gradient(135deg,#00ffe0,#0088ff);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 20px #00ffe066);text-align:center;letter-spacing:1px}
+.logo-s{color:#2a5a78;letter-spacing:5px;font-size:.82em;text-align:center;margin-top:3px}
+.setup-box{font-size:.88em;color:#3a6080;line-height:1.8;border:1px solid #0a2030;
+  border-radius:12px;padding:14px 20px;background:#040c18;text-align:center}
+.ol{font-size:.78em;color:#1e5070;letter-spacing:3px;text-transform:uppercase;
+  font-weight:700;text-align:center;margin-bottom:10px}
+.or{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.ob{padding:12px 28px;border:2px solid #0a1e30;background:#040c18;color:#2a5070;
+  border-radius:9px;font-size:.95em;cursor:pointer;transition:all .2s;
+  font-family:'Noto Sans KR',sans-serif}
+.ob:hover{border-color:#1a4060;color:#5a90b0}
+.ob.sel{border-color:#00ffe0;color:#00ffe0;background:#001a15;box-shadow:0 0 14px #00ffe033}
+.sbtn{padding:16px 68px;background:linear-gradient(135deg,#00aa77,#007aaa);
+  color:#fff;border:none;border-radius:12px;font-size:1.2em;font-weight:700;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  box-shadow:0 0 28px #00aa7744;transition:all .2s}
+.sbtn:hover{transform:scale(1.04);box-shadow:0 0 45px #00aa7788}
+
+/* ── GAME ── */
+#game{display:none;flex-direction:column;flex:1;min-height:0}
+#hud{display:flex;align-items:center;justify-content:space-between;
+  padding:5px 16px;background:#010306;border-bottom:1px solid #08152a;
+  flex-shrink:0;min-height:46px;gap:12px}
+.hud-l{font-family:'Orbitron',monospace;font-size:.88em;color:#0077cc;
+  font-weight:700;letter-spacing:2px;white-space:nowrap}
+.hud-c{flex:1;text-align:center;font-size:.8em;color:#2a4a60}
+#endBtn{padding:8px 16px;background:linear-gradient(135deg,#660011,#991122);
+  color:#fff;border:none;border-radius:8px;font-family:'Noto Sans KR',sans-serif;
+  font-size:.82em;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+#endBtn:hover{background:linear-gradient(135deg,#880011,#cc1133)}
+
+#cvWrap{flex:1;min-height:0;overflow:hidden}
+#cv{display:block;touch-action:none}
+
+/* ── STATUS BAR ── */
+#sb{display:flex;align-items:stretch;gap:8px;padding:5px 12px;
+  background:#010306;border-top:1px solid #08152a;flex-shrink:0;min-height:76px}
+.pc{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1px;padding:5px 8px;border-radius:10px;background:#050a16;border:2px solid;transition:all .3s}
+.pc.finished{background:rgba(255,200,0,0.07);border-width:2px}
+.pc-name{font-size:.7em;font-weight:700;letter-spacing:2px}
+.pc-row{display:flex;align-items:center;gap:8px}
+.pc-score{font-family:'Orbitron',monospace;font-size:1.4em;font-weight:700}
+.pc-lv{font-family:'Orbitron',monospace;font-size:.75em;padding:2px 6px;
+  border-radius:4px;font-weight:700}
+.pc-st{font-size:.65em;color:#1e3a50}
+.pc.finished .pc-st{color:#FFD700;font-weight:700}
+
+/* ── GAME OVER ── */
+#gameOver{display:none;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;gap:24px;padding:40px;text-align:center}
+.go-t{font-family:'Orbitron',monospace;font-size:2.2em;font-weight:900;color:#FFD700;
+  text-shadow:0 0 30px #FFD70088;animation:glow 1.2s ease-in-out infinite alternate}
+@keyframes glow{from{text-shadow:0 0 10px #FFD70066}to{text-shadow:0 0 35px #FFD700,0 0 60px #FFD70066}}
+#fcards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.rbtn{padding:14px 52px;background:linear-gradient(135deg,#aa2233,#ee3355);
+  color:#fff;border:none;border-radius:12px;font-size:1.15em;font-weight:700;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s}
+.rbtn:hover{transform:scale(1.04)}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="setup">
+  <div>
+    <div class="logo">LASER REFLECTION</div>
+    <div class="logo-s">빛의 반사 퍼즐 · 개인 레벨 경쟁</div>
+  </div>
+  <div class="setup-box">
+    🔬 거울을 배치해 레이저를 ⭐에 맞추세요! <b style="color:#4a90b8">입사각 = 반사각</b><br>
+    클리어하면 <b style="color:#00ff88">즉시 다음 레벨</b>로 이동! 10레벨 먼저 완주하면 승리!<br>
+    <span style="color:#1e4060;font-size:.88em">탭=거울 배치/방향전환 &nbsp;|&nbsp; 길게 누르기=거울 제거</span>
+  </div>
+  <div>
+    <div class="ol">👥 참가 인원</div>
+    <div class="or" id="pBtns">
+      <button class="ob" onclick="po('p',1,this)">1인</button>
+      <button class="ob" onclick="po('p',2,this)">2인</button>
+      <button class="ob sel" onclick="po('p',3,this)">3인</button>
+      <button class="ob" onclick="po('p',4,this)">4인</button>
+    </div>
+  </div>
+  <div>
+    <div class="ol">⚡ 난이도</div>
+    <div class="or" id="dBtns">
+      <button class="ob" onclick="po('d','easy',this)">🌱 하</button>
+      <button class="ob sel" onclick="po('d','medium',this)">⚡ 중</button>
+      <button class="ob" onclick="po('d','hard',this)">🔥 상</button>
+    </div>
+  </div>
+  <button class="sbtn" onclick="startGame()">🚀 게임 시작!</button>
+</div>
+
+<!-- ══ GAME ══ -->
+<div id="game">
+  <div id="hud">
+    <div class="hud-l">LASER REFLECTION</div>
+    <div class="hud-c" id="hDiff"></div>
+    <button id="sndBtn" onclick="toggleSound()" style="padding:8px 14px;background:#0a1e30;color:#3a7a9a;border:1.5px solid #1a3a50;border-radius:8px;font-size:1.1em;cursor:pointer;transition:all .2s;min-width:42px" title="사운드 켜기/끄기">🔊</button>
+    <button id="endBtn" onclick="endGame()">게임 종료 ▶</button>
+  </div>
+  <div id="cvWrap"><canvas id="cv"></canvas></div>
+  <div id="sb"></div>
+</div>
+
+<!-- ══ GAME OVER ══ -->
+<div id="gameOver">
+  <div class="go-t">🏁 최종 결과!</div>
+  <div style="color:#3a6080;font-size:.95em">레벨 완주 수 &amp; 최종 점수</div>
+  <div id="fcards"></div>
+  <button class="rbtn" onclick="goSetup()">🔄 다시 시작</button>
+</div>
+
+<script>
+'use strict';
+/* ═══════════════════════════
+   CONSTANTS
+═══════════════════════════ */
+const GS = 6;
+const PC = ['#00FFD0','#FF6688','#FFD040','#88CCFF'];
+const PN = ['1P','2P','3P','4P'];
+const MAX_LVL = 10;
+
+const LCF = [
+  {nm:1,no:0,ne:0,t:'튜토리얼'},
+  {nm:2,no:0,ne:1,t:'연속 반사'},
+  {nm:2,no:1,ne:1,t:'장애물 회피'},
+  {nm:3,no:1,ne:1,t:'삼중 반사'},
+  {nm:3,no:2,ne:2,t:'에너지 수집'},
+  {nm:4,no:2,ne:2,t:'복합 경로'},
+  {nm:4,no:3,ne:2,t:'미로 탐색'},
+  {nm:5,no:3,ne:3,t:'정밀 조준'},
+  {nm:5,no:4,ne:3,t:'고급 전략'},
+  {nm:6,no:4,ne:3,t:'마스터 레벨'},
+];
+
+/* ═══════════════════════════
+   GAME STATE
+═══════════════════════════ */
+const G = {np:3, diff:'medium'};
+let CV, CX, sections=[], raf=null;
+const tStart={}, lTimer={};
+
+/* ═══════════════════════════
+   SECTION CLASS
+═══════════════════════════ */
+class Sec {
+  constructor(pid) {
+    this.pid = pid;
+    this.b = {x:0,y:0,w:0,h:0};
+    this.cs=0; this.gx=0; this.gy=0;
+    this.fb=null; this.rb=null;
+    // ── per-player level & score ──
+    this.lvl = 1;          // current level (1~MAX_LVL)
+    this.score = 0;
+    this.finished = false; // completed all 10 levels
+    this.lvlsCleared = 0;  // how many levels cleared
+    // ── puzzle state ──
+    this.level = null;
+    this.mirrors = []; this.mc = 0;
+    this.lPath = null; this.lRes = null;
+    this.solved = false;
+    this.aT=0; this.aDur=0; this.aOn=false; this.aDone=false;
+    this.msg=''; this.msgA=0;
+    this.advTimer = null;
+  }
+
+  layout(x,y,w,h) {
+    this.b={x,y,w,h};
+    const HDR=44, FTR=54, PAD=6;
+    const avW=w-PAD*2, avH=h-HDR-FTR-PAD;
+    this.cs = Math.floor(Math.min(avW,avH)/GS);
+    this.gx = (w - this.cs*GS)/2;
+    this.gy = HDR + PAD + (avH - this.cs*GS)/2;
+    const fbW=Math.min(w-16,165);
+    this.fb={x:(w-fbW)/2, y:h-FTR+7, w:fbW, h:FTR-15};
+    this.rb={x:w-52, y:HDR-22, w:46, h:20};
+  }
+
+  reset() {
+    // 내부 전환용 (레벨 이동 시 호출) - 완전 초기화
+    this.mirrors=[]; this.mc=0;
+    this.lPath=null; this.lRes=null;
+    this.aOn=false; this.aDone=false;
+    this.solved=false;
+  }
+
+  clearMirrors() {
+    // 초기화 버튼용 - 클리어/완주 상태면 실행 안 함 (점수 중복 방지)
+    if(this.solved||this.finished) return;
+    this.mirrors=[]; this.mc=0;
+    this.lPath=null; this.lRes=null;
+    this.aOn=false; this.aDone=false;
+  }
+
+  cell(cx,cy) {
+    const lx=cx-this.b.x-this.gx, ly=cy-this.b.y-this.gy;
+    if(lx<0||ly<0) return null;
+    const c=Math.floor(lx/this.cs), r=Math.floor(ly/this.cs);
+    return (c>=0&&c<GS&&r>=0&&r<GS)?{c,r}:null;
+  }
+  inFB(cx,cy){const lx=cx-this.b.x,ly=cy-this.b.y;return lx>=this.fb.x&&lx<=this.fb.x+this.fb.w&&ly>=this.fb.y&&ly<=this.fb.y+this.fb.h;}
+  inRB(cx,cy){const lx=cx-this.b.x,ly=cy-this.b.y;return lx>=this.rb.x&&lx<=this.rb.x+this.rb.w&&ly>=this.rb.y&&ly<=this.rb.y+this.rb.h;}
+
+  tap(c,r) {
+    if(!this.level||this.solved||this.finished) return;
+    const L=this.level;
+    if((c===L.em.x&&r===L.em.y)||(c===L.star.x&&r===L.star.y)) return;
+    if(L.obs.some(o=>o.x===c&&o.y===r)) return;
+    if(L.eng.some(e=>e.x===c&&e.y===r)) return;
+    const idx=this.mirrors.findIndex(m=>m.x===c&&m.y===r);
+    if(idx<0){
+      if(this.mc>=L.nm){this.say('⚠️ 한도 초과!');return;}
+      this.mirrors.push({x:c,y:r,t:'/'});this.mc++;playClick();
+    } else {
+      const m=this.mirrors[idx];
+      if(m.t==='/'){m.t='\\';playToggle();}
+      else {this.mirrors.splice(idx,1);this.mc--;playRemove();}
+    }
+    this.lPath=null; this.aDone=false;
+  }
+
+  remove(c,r) {
+    if(!this.level||this.solved||this.finished) return;
+    const idx=this.mirrors.findIndex(m=>m.x===c&&m.y===r);
+    if(idx>=0){this.mirrors.splice(idx,1);this.mc--;this.lPath=null;this.aDone=false;this.say('🗑️');}
+  }
+
+  fire() {
+    if(!this.level||this.solved||this.finished||this.aOn) return;
+    const res=simLaser(this);
+    this.lPath=res.path; this.lRes=res;
+    this.aT=performance.now(); this.aDur=Math.max(280,res.path.length*80);
+    this.aOn=true; this.aDone=false;
+    playLaser();
+    if(!res.hitStar){this.say('❌ 별에 닿지 못했어요!');setTimeout(playFail,350);}
+    else if(!res.allEng){this.say('⚡ 에너지를 모두 수집하세요!');setTimeout(playEngFail,350);}
+  }
+
+  update(now) {
+    if(this.aOn&&(now-this.aT)>=this.aDur){
+      this.aOn=false; this.aDone=true;
+      if(this.lRes?.success&&!this.solved) this.doSolve();
+    }
+    if(this.msgA>0) this.msgA=Math.max(0,this.msgA-0.016);
+  }
+
+  doSolve() {
+    this.solved=true;
+    this.lvlsCleared++;
+    // 점수: 레벨 번호 × 10 (어려울수록 高점수)
+    this.score += this.lvl * 10;
+    updateSB();
+
+    if(this.lvl >= MAX_LVL) {
+      // ── 완주! ──
+      this.finished = true;
+      playComplete();
+      updateSB();
+      checkAllFinished();
+      return;
+    }
+
+    playClear();
+    // 1.5초 후 이 섹션만 다음 레벨로
+    clearTimeout(this.advTimer);
+    this.advTimer = setTimeout(()=>{
+      this.lvl++;
+      this.level = genLevel(this.lvl);
+      this.reset();
+      playLevelUp();
+    }, 1500);
+  }
+
+  say(t){this.msg=t;this.msgA=1;}
+
+  aProg(){
+    if(!this.lPath) return 0;
+    if(this.aDone) return this.lPath.length-1;
+    return Math.min(1,(performance.now()-this.aT)/this.aDur)*(this.lPath.length-1);
+  }
+}
+
+/* ═══════════════════════════
+   LEVEL GENERATION
+═══════════════════════════ */
+function refl(dx,dy,t){return t==='/'?[-dy,-dx]:[dy,dx];}
+function shuf(a){for(let i=a.length-1;i>0;i--){const j=0|Math.random()*(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function adjCfg(c){
+  const r={...c};
+  if(G.diff==='easy'){r.nm=Math.max(1,c.nm-1);r.no=Math.max(0,c.no-1);r.ne=Math.max(0,c.ne-1);}
+  if(G.diff==='hard'){r.nm=c.nm+1;r.no=c.no+1;r.ne=Math.min(c.ne+1,4);}
+  return r;
+}
+
+function tryGen(nm,no,ne){
+  const e=0|Math.random()*4,p=1+(0|Math.random()*(GS-2));
+  const ED=[[p,0,0,1],[GS-1,p,-1,0],[p,GS-1,0,-1],[0,p,1,0]];
+  const[ex,ey,edx,edy]=ED[e];
+  const em={x:ex,y:ey,dx:edx,dy:edy};
+  let x=ex+edx,y=ey+edy,dx=edx,dy=edy;
+  if(x<0||x>=GS||y<0||y>=GS) return null;
+  const sol=[],used=new Set([`${ex},${ey}`]);
+  for(let i=0;i<nm;i++){
+    const last=i===nm-1,cands=[];
+    let cx=x,cy=y;
+    while(cx>=0&&cx<GS&&cy>=0&&cy<GS){
+      if(!used.has(`${cx},${cy}`)){
+        for(const tp of shuf(['/','\\'])){
+          const[ndx,ndy]=refl(dx,dy,tp);
+          const nx=cx+ndx,ny=cy+ndy;
+          if(nx>=0&&nx<GS&&ny>=0&&ny<GS){
+            if(!last){let rm=0,rx=nx,ry=ny;while(rx>=0&&rx<GS&&ry>=0&&ry<GS&&rm<3){rm++;rx+=ndx;ry+=ndy;}if(rm>=2)cands.push({x:cx,y:cy,tp,ndx,ndy});}
+            else cands.push({x:cx,y:cy,tp,ndx,ndy});
+          }
+        }
+      }
+      cx+=dx;cy+=dy;
+    }
+    if(!cands.length) return null;
+    shuf(cands);const ch=cands[0];
+    let tx=x,ty=y;while(tx!==ch.x||ty!==ch.y){used.add(`${tx},${ty}`);tx+=dx;ty+=dy;}
+    used.add(`${ch.x},${ch.y}`);
+    sol.push({x:ch.x,y:ch.y,t:ch.tp});
+    x=ch.x+ch.ndx;y=ch.y+ch.ndy;dx=ch.ndx;dy=ch.ndy;
+  }
+  const ray=[];let fx=x,fy=y;
+  while(fx>=0&&fx<GS&&fy>=0&&fy<GS){if(!used.has(`${fx},${fy}`))ray.push({x:fx,y:fy});fx+=dx;fy+=dy;}
+  if(!ray.length) return null;
+  const si=ray.length===1?0:Math.max(1,0|ray.length*(0.5+Math.random()*0.42));
+  const star=ray[Math.min(si,ray.length-1)];
+  const mm={};sol.forEach(m=>mm[`${m.x},${m.y}`]=m.t);
+  const pa=[];let px=em.x,py=em.y,pdx=em.dx,pdy=em.dy,st=GS*GS*7;
+  while(st-->0){
+    pa.push({x:px,y:py});
+    if(px===star.x&&py===star.y) break;
+    px+=pdx;py+=pdy;
+    if(px<0||px>=GS||py<0||py>=GS) break;
+    if(mm[`${px},${py}`]){const[a,b]=refl(pdx,pdy,mm[`${px},${py}`]);pdx=a;pdy=b;}
+  }
+  const pSet=new Set(pa.map(c=>`${c.x},${c.y}`));
+  const mSet=new Set(sol.map(m=>`${m.x},${m.y}`));
+  const eC=pa.filter(c=>{const k=`${c.x},${c.y}`;return k!==`${em.x},${em.y}`&&k!==`${star.x},${star.y}`&&!mSet.has(k);});
+  if(eC.length<ne) return null;
+  shuf(eC);const step=Math.max(1,0|eC.length/(ne+1));
+  const eng=[];for(let i=0;i<ne;i++)eng.push(eC[Math.min(i*step+step,eC.length-1)]);
+  const oC=[];for(let r=0;r<GS;r++)for(let c=0;c<GS;c++)if(!pSet.has(`${c},${r}`))oC.push({x:c,y:r});
+  shuf(oC);
+  return{nm,em,star,sol,eng,obs:oC.slice(0,no)};
+}
+
+function genLevel(lvl){
+  const bc=LCF[Math.min(lvl-1,9)];
+  const c=adjCfg(bc);
+  let L=null,att=0;
+  while(att<400){
+    att++;
+    try{
+      const candidate=tryGen(c.nm,c.no,c.ne);
+      if(!candidate) continue;
+      // ★ 핵심 검증: 정답 거울로 실제 시뮬레이션이 성공하는지 확인
+      // 자기교차 경로(루프) 버그로 인한 불가능 퍼즐 차단
+      const testSec={level:candidate, mirrors:candidate.sol.map(m=>({x:m.x,y:m.y,t:m.t}))};
+      const verify=simLaser(testSec);
+      if(verify.success){L=candidate;break;}
+    }catch(e){}
+  }
+  if(!L){const my=0|GS/2,mx=0|GS/2;L={nm:1,em:{x:0,y:my,dx:1,dy:0},star:{x:mx,y:0},sol:[{x:mx,y:my,t:'/'}],eng:[],obs:[]};}
+  L.lvlNum=lvl; L.title=bc.t;
+  return L;
+}
+
+/* ═══════════════════════════
+   SIMULATION
+═══════════════════════════ */
+function simLaser(sec){
+  const L=sec.level;
+  const mm={};sec.mirrors.forEach(m=>mm[`${m.x},${m.y}`]=m.t);
+  const obsS=new Set(L.obs.map(o=>`${o.x},${o.y}`));
+  const engS=new Set(L.eng.map(e=>`${e.x},${e.y}`));
+  const path=[{x:L.em.x,y:L.em.y}];
+  let x=L.em.x+L.em.dx,y=L.em.y+L.em.dy,dx=L.em.dx,dy=L.em.dy;
+  const vis=new Set(),eH=new Set();let hitStar=false,ms=GS*GS*6;
+  while(ms-->0&&x>=0&&x<GS&&y>=0&&y<GS){
+    const k=`${x},${y}`;if(obsS.has(k))break;
+    const sk=`${x},${y},${dx},${dy}`;if(vis.has(sk))break;vis.add(sk);
+    const isE=engS.has(k);if(isE)eH.add(k);
+    path.push({x,y,isE});
+    if(x===L.star.x&&y===L.star.y){hitStar=true;break;}
+    if(mm[k]){const[a,b]=refl(dx,dy,mm[k]);dx=a;dy=b;}
+    x+=dx;y+=dy;
+  }
+  const allEng=L.eng.every(e=>eH.has(`${e.x},${e.y}`));
+  return{path,success:hitStar&&allEng,hitStar,allEng};
+}
+
+/* ═══════════════════════════
+   RENDERING
+═══════════════════════════ */
+function drawAll(now){
+  if(!CV||!sections.length) return;
+  now=now||performance.now();
+  sections.forEach(s=>s.update(now));
+  CX.clearRect(0,0,CV.width,CV.height);
+  CX.fillStyle='#01030a';CX.fillRect(0,0,CV.width,CV.height);
+  sections.forEach(s=>drawSec(s));
+  // dividers
+  for(let i=0;i<sections.length-1;i++){
+    const s=sections[i],dx=s.b.x+s.b.w;
+    const g=CX.createLinearGradient(dx-2,0,dx+3,0);
+    g.addColorStop(0,PC[i]+'66');g.addColorStop(0.5,'#ffffff44');g.addColorStop(1,PC[i+1]+'66');
+    CX.fillStyle=g;CX.fillRect(dx-1,0,4,CV.height);
+  }
+}
+
+function drawSec(sec){
+  const{x,y,w,h}=sec.b,col=PC[sec.pid];
+  CX.save();CX.translate(x,y);
+  CX.beginPath();CX.rect(0,0,w,h);CX.clip();
+
+  // BG
+  CX.fillStyle='#02050e';CX.fillRect(0,0,w,h);
+  if(sec.finished){
+    // golden tint for finisher
+    CX.fillStyle='rgba(255,200,0,0.04)';CX.fillRect(0,0,w,h);
+  } else if(sec.solved&&sec.aDone){
+    CX.fillStyle='rgba(0,200,80,0.04)';CX.fillRect(0,0,w,h);
+  }
+
+  // ── Header ──
+  const hcol=sec.finished?'#FFD700':col;
+  CX.fillStyle=hcol+'18';CX.fillRect(0,0,w,42);
+  CX.fillStyle=hcol+'bb';CX.fillRect(0,40,w,2);
+
+  // Player name + level (left)
+  CX.save();
+  CX.font='bold 15px Orbitron,monospace';
+  CX.fillStyle=hcol;CX.textAlign='left';CX.textBaseline='middle';
+  CX.shadowBlur=10;CX.shadowColor=hcol;
+  CX.fillText(PN[sec.pid],8,13);CX.restore();
+
+  // Level indicator (below name)
+  CX.save();
+  const lvlText=sec.finished?`🏆 완주!`:`LV.${sec.lvl} / ${MAX_LVL}`;
+  CX.font=`bold ${Math.min(11,w/14)}px Orbitron,monospace`;
+  CX.fillStyle=sec.finished?'#FFD700':col+'aa';CX.textAlign='left';CX.textBaseline='middle';
+  CX.fillText(lvlText,8,29);CX.restore();
+
+  // Level title (center header)
+  if(sec.level){
+    CX.save();
+    CX.font=`${Math.min(11,w/16)}px Noto Sans KR,sans-serif`;
+    CX.fillStyle='#2a4a60';CX.textAlign='center';CX.textBaseline='middle';
+    CX.fillText(sec.level.title||'',w/2,21);CX.restore();
+  }
+
+  // Mirror badge (right)
+  const nm=sec.level?.nm||0;
+  CX.save();
+  CX.font='bold 11px Orbitron,monospace';CX.textAlign='right';CX.textBaseline='middle';
+  CX.fillStyle=sec.mc>=nm?'#00cc88':'#cc3344';
+  CX.fillText(`거울: ${sec.mc}/${nm}`,w-8,21);CX.restore();
+
+  // Reset btn
+  rr(sec.rb.x,sec.rb.y,sec.rb.w,sec.rb.h,4);
+  CX.fillStyle='#101e30';CX.fill();
+  CX.font='9px Noto Sans KR,sans-serif';CX.textAlign='center';CX.textBaseline='middle';
+  CX.fillStyle='#2a4a60';
+  CX.fillText('초기화',sec.rb.x+sec.rb.w/2,sec.rb.y+sec.rb.h/2);
+
+  // Grid
+  const cs=sec.cs,gx=sec.gx,gy=sec.gy;
+  CX.fillStyle='#020710';CX.fillRect(gx,gy,cs*GS,cs*GS);
+  CX.save();CX.strokeStyle=hcol+'44';CX.lineWidth=2;
+  CX.strokeRect(gx,gy,cs*GS,cs*GS);CX.restore();
+  CX.save();CX.strokeStyle='#08152a';CX.lineWidth=1;
+  for(let i=0;i<=GS;i++){
+    CX.beginPath();CX.moveTo(gx+i*cs,gy);CX.lineTo(gx+i*cs,gy+GS*cs);CX.stroke();
+    CX.beginPath();CX.moveTo(gx,gy+i*cs);CX.lineTo(gx+GS*cs,gy+i*cs);CX.stroke();
+  }CX.restore();
+
+  if(sec.level&&!sec.finished){
+    const L=sec.level;
+    L.obs.forEach(o=>rObs(sec,o.x,o.y));
+    const hS=new Set();
+    if(sec.lPath)sec.lPath.forEach(p=>{if(p.isE)hS.add(`${p.x},${p.y}`);});
+    L.eng.forEach(e=>rEng(sec,e.x,e.y,hS.has(`${e.x},${e.y}`)&&sec.aDone));
+    if(sec.lPath)rLaser(sec,sec.lPath,sec.aProg());
+    sec.mirrors.forEach(m=>rMirror(sec,m.x,m.y,m.t,hcol));
+    rEmitter(sec,L.em.x,L.em.y,L.em.dx,L.em.dy);
+    rStar(sec,L.star.x,L.star.y,sec.aDone&&sec.lRes?.hitStar);
+  }
+
+  // Fire button
+  if(!sec.finished){
+    const fb=sec.fb;
+    CX.save();
+    const bg=CX.createLinearGradient(fb.x,fb.y,fb.x,fb.y+fb.h);
+    if(sec.solved){bg.addColorStop(0,'#005533');bg.addColorStop(1,'#003322');}
+    else{bg.addColorStop(0,'#880022');bg.addColorStop(1,'#550011');}
+    CX.shadowBlur=10;CX.shadowColor=sec.solved?'#00aa44':hcol;
+    rr(fb.x,fb.y,fb.w,fb.h,8);CX.fillStyle=bg;CX.fill();
+    CX.strokeStyle=sec.solved?'#00aa44':hcol+'66';CX.lineWidth=1.5;
+    rr(fb.x,fb.y,fb.w,fb.h,8);CX.stroke();CX.shadowBlur=0;
+    const fs=Math.min(13,fb.w/11);
+    CX.font=`bold ${fs}px Noto Sans KR,sans-serif`;
+    CX.textAlign='center';CX.textBaseline='middle';CX.fillStyle='#fff';
+    CX.fillText(sec.solved?'✓ 다음 레벨 이동 중...':'🚀 레이저 발사!',fb.x+fb.w/2,fb.y+fb.h/2);
+    CX.restore();
+  }
+
+  // CLEAR overlay (brief, before auto-advance)
+  if(sec.solved&&!sec.finished){
+    CX.fillStyle='rgba(0,220,80,0.1)';CX.fillRect(0,42,w,h-42);
+    CX.save();
+    const fs=Math.min(32,w/4.5);
+    CX.font=`bold ${fs}px Orbitron,monospace`;
+    CX.textAlign='center';CX.textBaseline='middle';
+    CX.shadowBlur=22;CX.shadowColor='#00cc88';CX.fillStyle='#00cc88';
+    CX.fillText('✓ CLEAR!',w/2,h/2-10);
+    CX.font=`${Math.min(14,w/14)}px Noto Sans KR,sans-serif`;
+    CX.shadowBlur=0;CX.fillStyle='#00aa66';
+    CX.fillText('다음 레벨로 이동 중...',w/2,h/2+20);
+    CX.restore();
+  }
+
+  // COMPLETE overlay (finished all levels)
+  if(sec.finished){
+    CX.fillStyle='rgba(255,200,0,0.08)';CX.fillRect(0,42,w,h-42);
+    CX.save();
+    const fs=Math.min(30,w/4.8);
+    CX.font=`bold ${fs}px Orbitron,monospace`;
+    CX.textAlign='center';CX.textBaseline='middle';
+    CX.shadowBlur=25;CX.shadowColor='#FFD700';CX.fillStyle='#FFD700';
+    CX.fillText('🏆 완주!',w/2,h/2-12);
+    CX.font=`${Math.min(14,w/14)}px Noto Sans KR,sans-serif`;
+    CX.shadowBlur=0;CX.fillStyle='#cc9900';
+    CX.fillText(`총점: ${sec.score}점`,w/2,h/2+18);
+    CX.restore();
+  }
+
+  // Message toast
+  if(sec.msgA>0){
+    CX.save();CX.globalAlpha=sec.msgA;
+    CX.font='bold 13px Noto Sans KR,sans-serif';
+    CX.textAlign='center';CX.textBaseline='middle';
+    CX.fillStyle='#ffcc44';
+    CX.fillText(sec.msg,w/2,gy+GS*cs+22);
+    CX.restore();
+  }
+
+  CX.restore();
+}
+
+/* drawing helpers */
+function cpt(sec,c,r){return{x:sec.gx+c*sec.cs+sec.cs/2,y:sec.gy+r*sec.cs+sec.cs/2};}
+
+function rObs(sec,c,r){
+  const cs=sec.cs,p=cs*.1,x=sec.gx+c*cs,y=sec.gy+r*cs;
+  rr(x+p,y+p,cs-p*2,cs-p*2,4);CX.fillStyle='#243040';CX.fill();
+  CX.strokeStyle='#3f5060';CX.lineWidth=1.5;rr(x+p,y+p,cs-p*2,cs-p*2,4);CX.stroke();
+  CX.strokeStyle='#2a3d50';CX.lineWidth=1;
+  CX.beginPath();CX.moveTo(x+p*2,y+cs/2);CX.lineTo(x+cs-p*2,y+cs/2);CX.stroke();
+  CX.beginPath();CX.moveTo(x+cs/2,y+p*2);CX.lineTo(x+cs/2,y+cs-p*2);CX.stroke();
+}
+
+function rEng(sec,c,r,hit){
+  const{x,y}=cpt(sec,c,r),rad=sec.cs*.21;
+  CX.save();CX.shadowBlur=hit?22:8;CX.shadowColor=hit?'#5599ff':'#113388';
+  CX.fillStyle=hit?'#88aaff':'#1e4499';
+  CX.beginPath();CX.arc(x,y,rad,0,Math.PI*2);CX.fill();
+  if(hit){CX.shadowBlur=5;CX.strokeStyle='#aaccff';CX.lineWidth=2;CX.beginPath();CX.arc(x,y,rad+4,0,Math.PI*2);CX.stroke();}
+  CX.restore();
+}
+
+function rLaser(sec,path,prog){
+  if(path.length<2) return;
+  const tot=path.length-1;
+  CX.save();
+  CX.shadowBlur=16;CX.shadowColor='#00ffe0';
+  CX.strokeStyle='rgba(0,255,210,0.4)';CX.lineWidth=8;CX.lineCap='round';CX.lineJoin='round';
+  drawLP(sec,path,prog,tot);CX.stroke();
+  CX.shadowBlur=3;CX.strokeStyle='rgba(255,255,255,0.9)';CX.lineWidth=2.5;
+  drawLP(sec,path,prog,tot);CX.stroke();
+  CX.restore();
+}
+function drawLP(sec,path,prog,tot){
+  CX.beginPath();
+  for(let i=0;i<Math.min(Math.floor(prog)+1,tot);i++){
+    const a=cpt(sec,path[i].x,path[i].y),b=cpt(sec,path[i+1].x,path[i+1].y);
+    if(i===0)CX.moveTo(a.x,a.y);
+    const t=Math.min(1,prog-i);CX.lineTo(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t);
+  }
+}
+
+function rMirror(sec,c,r,type,col){
+  const x=sec.gx+c*sec.cs,y=sec.gy+r*sec.cs,cs=sec.cs,p=cs*.13;
+  CX.save();CX.shadowBlur=14;CX.shadowColor=col;
+  CX.strokeStyle=col;CX.lineWidth=Math.max(3.5,cs*.085);CX.lineCap='round';
+  CX.beginPath();
+  if(type==='/'){ CX.moveTo(x+cs-p,y+p);CX.lineTo(x+p,y+cs-p);}
+  else{CX.moveTo(x+p,y+p);CX.lineTo(x+cs-p,y+cs-p);}
+  CX.stroke();CX.restore();
+}
+
+function rEmitter(sec,c,r,dx,dy){
+  const{x,y}=cpt(sec,c,r),hs=sec.cs*.28;
+  CX.save();CX.shadowBlur=18;CX.shadowColor='#00ccff';
+  CX.fillStyle='#001520';rr(x-hs,y-hs,hs*2,hs*2,5);CX.fill();
+  CX.strokeStyle='#00ccff';CX.lineWidth=2.5;rr(x-hs,y-hs,hs*2,hs*2,5);CX.stroke();
+  CX.fillStyle='#00ccff';rr(x-hs*.46,y-hs*.46,hs*.92,hs*.92,3);CX.fill();
+  const aS=hs+3,aL=sec.cs*.36,ax=x+dx*(aS+aL),ay=y+dy*(aS+aL);
+  CX.strokeStyle='#00ccff';CX.lineWidth=2;CX.shadowBlur=8;
+  CX.beginPath();CX.moveTo(x+dx*aS,y+dy*aS);CX.lineTo(ax,ay);CX.stroke();
+  const ang=Math.atan2(dy,dx);
+  CX.fillStyle='#00ccff';CX.beginPath();
+  CX.moveTo(ax,ay);
+  CX.lineTo(ax-Math.cos(ang-.4)*aL*.42,ay-Math.sin(ang-.4)*aL*.42);
+  CX.lineTo(ax-Math.cos(ang+.4)*aL*.42,ay-Math.sin(ang+.4)*aL*.42);
+  CX.closePath();CX.fill();CX.restore();
+}
+
+function rStar(sec,c,r,lit){
+  const{x,y}=cpt(sec,c,r),rad=sec.cs*.34;
+  CX.save();CX.shadowBlur=lit?30:10;CX.shadowColor=lit?'#FFD700':'#775500';
+  CX.fillStyle=lit?'#FFD700':'#664400';
+  CX.beginPath();
+  for(let i=0;i<5;i++){
+    const oa=-Math.PI/2+i*4*Math.PI/5,ia=oa+Math.PI/5;
+    if(i===0)CX.moveTo(x+Math.cos(oa)*rad,y+Math.sin(oa)*rad);
+    else CX.lineTo(x+Math.cos(oa)*rad,y+Math.sin(oa)*rad);
+    CX.lineTo(x+Math.cos(ia)*rad*.42,y+Math.sin(ia)*rad*.42);
+  }
+  CX.closePath();CX.fill();CX.restore();
+}
+
+function rr(x,y,w,h,r){
+  if(CX.roundRect){CX.beginPath();CX.roundRect(x,y,w,h,r);}
+  else{
+    CX.beginPath();CX.moveTo(x+r,y);CX.lineTo(x+w-r,y);
+    CX.quadraticCurveTo(x+w,y,x+w,y+r);CX.lineTo(x+w,y+h-r);
+    CX.quadraticCurveTo(x+w,y+h,x+w-r,y+h);CX.lineTo(x+r,y+h);
+    CX.quadraticCurveTo(x,y+h,x,y+h-r);CX.lineTo(x,y+r);
+    CX.quadraticCurveTo(x,y,x+r,y);CX.closePath();
+  }
+}
+
+/* ═══════════════════════════
+   INPUT
+═══════════════════════════ */
+function cvCoords(t){
+  const rect=CV.getBoundingClientRect();
+  return{x:(t.clientX-rect.left)*(CV.width/rect.width),
+         y:(t.clientY-rect.top)*(CV.height/rect.height)};
+}
+function secAt(cx,cy){return sections.find(s=>cx>=s.b.x&&cx<s.b.x+s.b.w&&cy>=s.b.y&&cy<s.b.y+s.b.h)||null;}
+
+function onTap(cx,cy){
+  const s=secAt(cx,cy);if(!s)return;
+  if(s.inFB(cx,cy)){s.fire();return;}
+  if(s.inRB(cx,cy)){s.clearMirrors();return;}
+  const cell=s.cell(cx,cy);if(cell)s.tap(cell.c,cell.r);
+}
+function onLong(cx,cy){
+  const s=secAt(cx,cy);if(!s)return;
+  const cell=s.cell(cx,cy);if(cell)s.remove(cell.c,cell.r);
+}
+
+function initInput(){
+  CV.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      const{x,y}=cvCoords(t);tStart[t.identifier]={x,y};
+      lTimer[t.identifier]=setTimeout(()=>{onLong(x,y);delete tStart[t.identifier];},500);
+    }
+  },{passive:false});
+  CV.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      const{x,y}=cvCoords(t);const s=tStart[t.identifier];
+      if(s&&Math.hypot(x-s.x,y-s.y)>13){clearTimeout(lTimer[t.identifier]);delete lTimer[t.identifier];delete tStart[t.identifier];}
+    }
+  },{passive:false});
+  CV.addEventListener('touchend',e=>{
+    e.preventDefault();
+    for(const t of e.changedTouches){
+      clearTimeout(lTimer[t.identifier]);delete lTimer[t.identifier];
+      if(tStart[t.identifier]){const{x,y}=cvCoords(t);onTap(x,y);delete tStart[t.identifier];}
+    }
+  },{passive:false});
+  CV.addEventListener('click',e=>{const{x,y}=cvCoords(e);onTap(x,y);});
+  CV.addEventListener('contextmenu',e=>{e.preventDefault();const{x,y}=cvCoords(e);onLong(x,y);});
+}
+
+/* ═══════════════════════════
+   GAME FLOW
+═══════════════════════════ */
+function checkAllFinished(){
+  if(sections.every(s=>s.finished)) setTimeout(showGameOver,2000);
+}
+
+function endGame(){sections.forEach(s=>clearTimeout(s.advTimer));showGameOver();}
+
+/* ═══════════════════════════
+   UI
+═══════════════════════════ */
+function updateSB(){
+  const sb=document.getElementById('sb');
+  sb.innerHTML='';
+  sections.forEach(s=>{
+    const col=PC[s.pid];
+    const d=document.createElement('div');
+    d.className='pc'+(s.finished?' finished':'');
+    d.style.borderColor=s.finished?'#FFD700':col;
+    const lvlDisplay=s.finished?'🏆 완주':`LV.${s.lvl}`;
+    const lvlCol=s.finished?'#FFD700':col;
+    const stText=s.finished?'완주! 최종점수':'도전 중...';
+    d.innerHTML=`
+      <div class="pc-name" style="color:${col}">${PN[s.pid]}</div>
+      <div class="pc-row">
+        <div class="pc-score" style="color:${col}">${s.score}</div>
+        <div class="pc-lv" style="color:${lvlCol};background:${lvlCol}22">${lvlDisplay}</div>
+      </div>
+      <div class="pc-st">${stText}</div>`;
+    sb.appendChild(d);
+  });
+}
+
+function showGameOver(){
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+  document.getElementById('game').style.display='none';
+  const go=document.getElementById('gameOver');go.style.display='flex';
+  const fc=document.getElementById('fcards');fc.innerHTML='';
+  const sorted=[...sections].sort((a,b)=>b.score-a.score||(b.lvlsCleared-a.lvlsCleared));
+  const medals=['🥇','🥈','🥉','4️⃣'];
+  sorted.forEach((s,rank)=>{
+    const col=PC[s.pid],d=document.createElement('div');
+    d.style.cssText=`padding:20px 28px;border:3px solid ${s.finished?'#FFD700':col};border-radius:16px;background:#050e1a;text-align:center`;
+    d.innerHTML=`<div style="font-size:1.9em;margin-bottom:6px">${medals[rank]}</div>
+      <div style="color:${col};font-weight:700;font-size:1em;margin-bottom:6px">${PN[s.pid]}</div>
+      <div style="color:${s.finished?'#FFD700':col};font-family:Orbitron,monospace;font-size:2.2em;font-weight:700">${s.score}</div>
+      <div style="color:#2a4a60;font-size:.78em;margin-top:4px">${s.lvlsCleared}레벨 완료</div>
+      ${s.finished?'<div style="color:#FFD700;font-size:.85em;margin-top:3px">🏆 전 구간 완주!</div>':''}`;
+    fc.appendChild(d);
+  });
+}
+
+/* ═══════════════════════════
+   SETUP
+═══════════════════════════ */
+function po(t,v,el){
+  if(t==='p'){G.np=v;document.querySelectorAll('#pBtns .ob').forEach(b=>b.classList.remove('sel'));}
+  else{G.diff=v;document.querySelectorAll('#dBtns .ob').forEach(b=>b.classList.remove('sel'));}
+  el.classList.add('sel');
+}
+
+function resize(){
+  if(!CV)return;
+  const hud=document.getElementById('hud'),sb=document.getElementById('sb');
+  CV.width=window.innerWidth;
+  CV.height=window.innerHeight-hud.offsetHeight-sb.offsetHeight;
+}
+
+function layoutSecs(){
+  const W=CV.width,H=CV.height,np=sections.length,dW=4;
+  const sW=Math.floor((W-dW*(np-1))/np);
+  sections.forEach((s,i)=>s.layout(i*(sW+dW),0,sW,H));
+}
+
+function startGame(){
+  document.getElementById('setup').style.display='none';
+  document.getElementById('game').style.display='flex';
+  const dif=G.diff==='easy'?'🌱 하':G.diff==='medium'?'⚡ 중':'🔥 상';
+  document.getElementById('hDiff').textContent=`난이도: ${dif} · 10레벨 먼저 완주하면 승리!`;
+  setTimeout(()=>{
+    CV=document.getElementById('cv');CX=CV.getContext('2d');
+    resize();
+    sections=[];
+    for(let i=0;i<G.np;i++){
+      const s=new Sec(i);
+      s.level=genLevel(1);
+      sections.push(s);
+    }
+    layoutSecs();
+    initInput();
+    updateSB();
+    if(raf)cancelAnimationFrame(raf);
+    function loop(now){drawAll(now);raf=requestAnimationFrame(loop);}
+    raf=requestAnimationFrame(loop);
+  },80);
+}
+
+function goSetup(){
+  // advTimer 전체 정리 (고아 setTimeout 방지)
+  sections.forEach(s=>clearTimeout(s.advTimer));
+  document.getElementById('gameOver').style.display='none';
+  document.getElementById('setup').style.display='flex';
+  sections=[];
+  if(raf){cancelAnimationFrame(raf);raf=null;}
+}
+
+window.addEventListener('resize',()=>{if(CV&&sections.length){resize();layoutSecs();}});
+
+/* ═══════════════════════════
+   SOUND SYSTEM (Web Audio API)
+═══════════════════════════ */
+let audioCtx = null;
+let soundOn = true;
+
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('sndBtn').textContent = soundOn ? '🔊' : '🔇';
+  document.getElementById('sndBtn').style.color = soundOn ? '#3a7a9a' : '#2a3a4a';
+  if (soundOn) playClick(); // 켜지는 느낌
+}
+
+// 기본 파형 재생 헬퍼
+function playTone(freq, type, vol, attack, sustain, release, delay=0) {
+  if (!soundOn) return;
+  try {
+    const ctx = getCtx();
+    const t = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type; osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + attack);
+    gain.gain.setValueAtTime(vol, t + attack + sustain);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + attack + sustain + release);
+    osc.start(t); osc.stop(t + attack + sustain + release + 0.01);
+  } catch(e){}
+}
+
+function playNoise(vol, duration, filterFreq=800, delay=0) {
+  if (!soundOn) return;
+  try {
+    const ctx = getCtx();
+    const t = ctx.currentTime + delay;
+    const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const gain = ctx.createGain();
+    src.buffer = buf; filter.type = 'bandpass'; filter.frequency.value = filterFreq;
+    src.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    src.start(t); src.stop(t + duration + 0.01);
+  } catch(e){}
+}
+
+// 거울 배치 (탁!)
+function playClick() {
+  playTone(900, 'square', 0.08, 0.001, 0.02, 0.05);
+  playTone(600, 'square', 0.05, 0.001, 0.01, 0.04);
+}
+
+// 거울 방향 전환 (틱!)
+function playToggle() {
+  playTone(1200, 'sine', 0.07, 0.001, 0.01, 0.04);
+}
+
+// 거울 제거 (뻑)
+function playRemove() {
+  playTone(300, 'sawtooth', 0.06, 0.001, 0.02, 0.08);
+  playNoise(0.04, 0.08, 400);
+}
+
+// 레이저 발사 (쉬이익~)
+function playLaser() {
+  if (!soundOn) return;
+  try {
+    const ctx = getCtx();
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(1200, t);
+    osc.frequency.exponentialRampToValueAtTime(200, t + 0.4);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    osc.start(t); osc.stop(t + 0.41);
+  } catch(e){}
+}
+
+// 별 적중 (땡!)
+function playHit() {
+  playTone(880, 'sine', 0.15, 0.001, 0.05, 0.3);
+  playTone(1320, 'sine', 0.1, 0.001, 0.03, 0.25);
+  playTone(1760, 'sine', 0.07, 0.005, 0.02, 0.2);
+}
+
+// 실패 (버어엉)
+function playFail() {
+  playTone(220, 'sawtooth', 0.08, 0.001, 0.1, 0.2);
+  playTone(180, 'sawtooth', 0.06, 0.02, 0.08, 0.2);
+}
+
+// 에너지 미수집 실패
+function playEngFail() {
+  playTone(440, 'sine', 0.08, 0.001, 0.03, 0.15);
+  playTone(330, 'sawtooth', 0.06, 0.02, 0.05, 0.15);
+}
+
+// CLEAR 클리어! (팡파레)
+function playClear() {
+  if (!soundOn) return;
+  const notes = [523, 659, 784, 1047]; // C E G C
+  notes.forEach((freq, i) => {
+    playTone(freq, 'sine', 0.14, 0.005, 0.08, 0.2, i * 0.1);
+    playTone(freq * 1.5, 'sine', 0.05, 0.005, 0.06, 0.18, i * 0.1);
+  });
+}
+
+// 🏆 완주! (승리 팡파레)
+function playComplete() {
+  if (!soundOn) return;
+  const melody = [523,659,784,659,784,1047];
+  melody.forEach((freq, i) => {
+    playTone(freq, 'sine', 0.16, 0.01, 0.1, 0.25, i * 0.12);
+    playTone(freq/2, 'triangle', 0.06, 0.01, 0.1, 0.2, i * 0.12);
+  });
+  playNoise(0.05, 0.8, 3000, 0);
+}
+
+// 레벨 이동 (스윕)
+function playLevelUp() {
+  if (!soundOn) return;
+  const ctx = getCtx();
+  const t = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(400, t);
+  osc.frequency.exponentialRampToValueAtTime(900, t + 0.3);
+  gain.gain.setValueAtTime(0.1, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+  osc.start(t); osc.stop(t + 0.36);
+}
+
+</script>
+</body>
+</html>
