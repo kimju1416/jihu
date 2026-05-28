@@ -188,18 +188,25 @@ class Sec {
 
   layout(x,y,w,h) {
     this.b={x,y,w,h};
-    const HDR=44, FTR=54, PAD=6;
+    const HDR=44, FTR=66, PAD=6;
     const avW=w-PAD*2, avH=h-HDR-FTR-PAD;
     this.cs = Math.floor(Math.min(avW,avH)/GS);
     this.gx = (w - this.cs*GS)/2;
     this.gy = HDR + PAD + (avH - this.cs*GS)/2;
-    const fbW=Math.min(w-16,165);
-    this.fb={x:(w-fbW)/2, y:h-FTR+7, w:fbW, h:FTR-15};
-    this.rb={x:w-52, y:HDR-22, w:46, h:20};
-    // 포기버튼: rb 바로 왼쪽, 섹션이 충분히 넓을 때만 표시
-    const gbW=46, gbGap=4;
-    const gbX=this.rb.x-gbGap-gbW;
-    this.gb = gbX>60 ? {x:gbX, y:HDR-22, w:gbW, h:20} : null;
+
+    // ── 하단 버튼 3개 나란히 ──
+    // [초기화] [💡포기] [🚀 레이저 발사!]
+    const btnH = FTR-18;          // 버튼 높이
+    const btnY = h - FTR + 8;     // 버튼 상단 y
+    const gap = 6;
+    const fbW = Math.min(w*0.48, 180);   // 발사버튼: 절반 너비
+    const sbW = Math.min((w - fbW - gap*3)*0.5, 90); // 초기화/포기: 나머지 절반씩
+    const totalW = sbW + gap + sbW + gap + fbW;
+    const startX = (w - totalW) / 2;
+
+    this.rb = {x:startX,           y:btnY, w:sbW, h:btnH};           // 초기화
+    this.gb = {x:startX+sbW+gap,   y:btnY, w:sbW, h:btnH};           // 포기
+    this.fb = {x:startX+sbW*2+gap*2, y:btnY, w:fbW, h:btnH};         // 발사
   }
 
   reset() {
@@ -508,22 +515,49 @@ function drawSec(sec){
   CX.fillStyle=sec.mc>=nm?'#00cc88':'#cc3344';
   CX.fillText(`거울: ${sec.mc}/${nm}`,w-8,21);CX.restore();
 
-  // Reset btn
-  rr(sec.rb.x,sec.rb.y,sec.rb.w,sec.rb.h,4);
-  CX.fillStyle='#101e30';CX.fill();
-  CX.font='9px Noto Sans KR,sans-serif';CX.textAlign='center';CX.textBaseline='middle';
-  CX.fillStyle='#2a4a60';
-  CX.fillText('초기화',sec.rb.x+sec.rb.w/2,sec.rb.y+sec.rb.h/2);
+  // ── 초기화 버튼 ──
+  if(!sec.finished){
+    CX.save();
+    rr(sec.rb.x,sec.rb.y,sec.rb.w,sec.rb.h,7);
+    const rbg=CX.createLinearGradient(sec.rb.x,sec.rb.y,sec.rb.x,sec.rb.y+sec.rb.h);
+    rbg.addColorStop(0,'#0d2035');rbg.addColorStop(1,'#07141f');
+    CX.fillStyle=rbg;CX.fill();
+    CX.strokeStyle='#1e4060';CX.lineWidth=1.5;
+    rr(sec.rb.x,sec.rb.y,sec.rb.w,sec.rb.h,7);CX.stroke();
+    const rfs=Math.min(12,sec.rb.w/6.5);
+    CX.font=`bold ${rfs}px Noto Sans KR,sans-serif`;
+    CX.textAlign='center';CX.textBaseline='middle';
+    CX.fillStyle='#5599cc';
+    CX.shadowBlur=4;CX.shadowColor='#3377aa';
+    CX.fillText('↺ 초기화',sec.rb.x+sec.rb.w/2,sec.rb.y+sec.rb.h/2);
+    CX.restore();
 
-  // Give-up btn (포기)
-  if(!sec.solved&&!sec.finished&&sec.gb){
-    rr(sec.gb.x,sec.gb.y,sec.gb.w,sec.gb.h,4);
-    CX.fillStyle=sec.showSol?'#1a0a00':'#0e1820';CX.fill();
-    CX.strokeStyle=sec.showSol?'#cc6600':'#1a3050';CX.lineWidth=1;
-    rr(sec.gb.x,sec.gb.y,sec.gb.w,sec.gb.h,4);CX.stroke();
-    CX.font='9px Noto Sans KR,sans-serif';CX.textAlign='center';CX.textBaseline='middle';
-    CX.fillStyle=sec.showSol?'#cc6600':'#cc4444';
-    CX.fillText('💡 포기',sec.gb.x+sec.gb.w/2,sec.gb.y+sec.gb.h/2);
+    // ── 포기 버튼 ──
+    if(!sec.solved&&sec.gb){
+      CX.save();
+      rr(sec.gb.x,sec.gb.y,sec.gb.w,sec.gb.h,7);
+      const gbg=CX.createLinearGradient(sec.gb.x,sec.gb.y,sec.gb.x,sec.gb.y+sec.gb.h);
+      if(sec.showSol){
+        gbg.addColorStop(0,'#2a1200');gbg.addColorStop(1,'#1a0a00');
+        CX.fillStyle=gbg;CX.fill();
+        CX.strokeStyle='#cc6600';CX.lineWidth=1.5;
+        rr(sec.gb.x,sec.gb.y,sec.gb.w,sec.gb.h,7);CX.stroke();
+        CX.shadowBlur=6;CX.shadowColor='#cc6600';
+        CX.fillStyle='#ff9944';
+      } else {
+        gbg.addColorStop(0,'#2a0a10');gbg.addColorStop(1,'#1a0608');
+        CX.fillStyle=gbg;CX.fill();
+        CX.strokeStyle='#883333';CX.lineWidth=1.5;
+        rr(sec.gb.x,sec.gb.y,sec.gb.w,sec.gb.h,7);CX.stroke();
+        CX.shadowBlur=4;CX.shadowColor='#cc2244';
+        CX.fillStyle='#ff5566';
+      }
+      const gfs=Math.min(12,sec.gb.w/6.5);
+      CX.font=`bold ${gfs}px Noto Sans KR,sans-serif`;
+      CX.textAlign='center';CX.textBaseline='middle';
+      CX.fillText(sec.showSol?'💡 공개됨':'💡 포기',sec.gb.x+sec.gb.w/2,sec.gb.y+sec.gb.h/2);
+      CX.restore();
+    }
   }
 
   // Grid
